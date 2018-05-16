@@ -210,7 +210,7 @@ gn.init().then(function(){
       
       if(
           (accelerationVector[0] = data.dm.gx) && 
-          (accelerationVector[1] = data.dm.gy) && 
+          (accelerationVector[1] = -data.dm.gy) &&
           (accelerationVector[2] = data.dm.gz) )
       {
           document.body.style.backgroundColor = "gray";
