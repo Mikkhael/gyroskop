@@ -72,132 +72,96 @@ var angularOrientation = {alpha: 0, beta: 0, gamma: 0};
 var accelerationVector = [0, 0, 0];
 var useAccelerationVector = false;
 
-ORDER = "ZXY";
-MASK = 7;
-
-function getGravityVector(alpha, beta, gamma, order, mask){
+function getGravityVector(a, b, g){
     
-    if(alpha === 0)
-        alpha = 0;
-    if(beta === 0)
-        beta = 0;
-    if(gamma === 0)
-        gamma = 0;
-    
-    if(order === undefined){
-        order = ORDER;
-    }
-    if(mask === undefined){
-        mask = MASK;
-    }
-    //document.getElementById('tak').style.transform = `rotateZ(${alpha}deg) rotateX(${beta}deg) rotateY(${gamma}deg)`;
-    //document.getElementById('orient').style.transform = `rotateY(${-gamma}deg) rotateX(${-beta}deg) rotateZ(${-alpha}deg)`;
-    
-    
-    let axToAng = {
-        Z: alpha,
-        Y: gamma,
-        X: beta,
-    };
-    
-//    document.getElementById('tak').style.transform =
-//    //"rotateX(90deg) " +
-//    "rotateZ(" + ((mask & 1 ? -1 : 1) * axToAng[order[0]]) + "deg) " +
-//    "rotateX(" + ((mask & 2 ? -1 : 1) * axToAng[order[1]]) + "deg) " +
-//    "rotateY(" + ((mask & 4 ? -1 : 1) * axToAng[order[2]]) + "deg) " +
-//    "";
-//    
 //     document.getElementById('orient').style.transform =
-//    "rotateX(90deg) " +
-//    "rotateZ(" + ( -alpha ) + "deg) " +
-//    "rotateX(" + -beta + "deg) " +
-//    "rotateY(" + ( -gamma ) + "deg)" +
-//    "rotateY(" + ( gamma ) + "deg)" +
-//    "rotateX(" + beta + "deg) " +
-//    "rotateZ(" + ( alpha ) + "deg) " +
+//    //"rotateX(90deg) " +
+//    "rotateZ(" + (-a) + "deg) " +
+//    "rotateX(" + b + "deg) " +
+//    "rotateY(" + (-g) + "deg) " +
 //    "";
-    
-    
-    
-    let rotate = function(axis, rad, vector){
-        let res = [];
-        let sin = Math.sin(rad);
-        let cos = Math.cos(rad);
-        
-        switch(axis){
-            case "X":{
-                res[1] = vector[1] * cos - vector[2] * sin;
-                res[2] = vector[1] * sin + vector[2] * cos;
-                res[0] = vector[0];
-                break;
-            }
-            case "Y":{
-                res[2] = vector[2] * cos - vector[0] * sin;
-                res[0] = vector[2] * sin + vector[0] * cos;
-                res[1] = vector[1];
-                break;
-            }
-            case "Z":{
-                res[0] = vector[0] * cos - vector[1] * sin;
-                res[1] = vector[0] * sin + vector[1] * cos;
-                res[2] = vector[2];
-                break;
-            }
-        }
-        
-        return res;
-    }
     
     let toRad = function(deg){
         return Math.PI * deg / 180;
     }
     
-    let gravity = [0,0,-1];
-    
-//    gravity = rotate("Y", 0,    gravity);
-//    gravity = rotate("X", 0,    gravity);
-//    gravity = rotate("Z", 0,    gravity);
-    
-    
-    gravity = rotate(order[0], (mask & 1 ? -1 : 1) * axToAng[order[0]],          gravity);
-    gravity = rotate(order[1], (mask & 2 ? -1 : 1) * axToAng[order[1]],          gravity);
-    gravity = rotate(order[2], (mask & 4 ? -1 : 1) * axToAng[order[2]],          gravity);
+    // Nie iwem dlaczego, ale tak działa
+    a   = 0;
+    b   = -toRad(b);
+    g   = toRad(g);
     
     
-    function normalized(v){
-        let mag = Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-        return [v[0] / mag, v[1] / mag, v[2] / mag];
-    }
+	/*
+    var qw, qx, qy, qz;
     
-    return normalized(gravity);
+    var cy = Math.cos(yaw * 0.5);
+	var sy = Math.sin(yaw * 0.5);
+	var cr = Math.cos(roll * 0.5);
+	var sr = Math.sin(roll * 0.5);
+	var cp = Math.cos(pitch * 0.5);
+	var sp = Math.sin(pitch * 0.5);
+
+	qw = cy * cr * cp + sy * sr * sp;
+	qx = cy * sr * cp - sy * cr * sp;
+	qy = cy * cr * sp + sy * sr * cp;
+	qz = sy * cr * cp - cy * sr * sp;
+    
+    qw2 = qw*qw;
+    qx2 = qx*qx;
+    qy2 = qy*qy;
+    qz2 = qz*qz;
+    
+    let m = [[],[],[]];
+    m[0][0] = 1 - 2*qy2 - 2*qz2;
+    m[0][1] = 2*qx*qy - 2*qz*qw;
+    m[0][2] = 2*qx*qz + 2*qy*qw;
+    m[1][0] = 2*qx*qy + 2*qz*qw;
+    m[1][1] = 1 - 2*qx2 - 2*qz2;
+    m[1][2] = 2*qy*qz - 2*qx*qw;
+    m[2][0] = 2*qx*qz - 2*qy*qw;
+    m[2][1] = 2*qy*qz + 2*qx*qw;
+    m[2][2] = 1 - 2*qx2 - 2*qy2;
+    
+    var v = [0,0,-1];
+    var resVector = [
+        v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2],
+        v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2],
+        v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2]
+    ]
+    
+    return resVector;
+    */
+    
+    let as = Math.sin(a);
+    let bs = Math.sin(b);
+    let gs = Math.sin(g);
+    let ac = Math.cos(a);
+    let bc = Math.cos(b);
+    let gc = Math.cos(g);
+    
+    var v = [0,0,-1]; 
+    
+    var resVectorYXZ = [];
+    
+    resVectorYXZ[0] = v[2] * (gc*bs*as - ac*gs);
+    resVectorYXZ[1] = v[2] * (gc*ac*bs + gs*as);
+    resVectorYXZ[2] = v[2] * (gc*bc);
+    
+    return resVectorYXZ;
 }
 
 function updateGravity(){
     if(useAccelerationVector){
-        game.physics.p2.gravity.x = accelerationVector[0] * gravityForce;
-        game.physics.p2.gravity.y = accelerationVector[1] * gravityForce;
+        game.physics.p2.gravity.x =   accelerationVector[0] * gravityForce;
+        game.physics.p2.gravity.y = - accelerationVector[1] * gravityForce;
         return;
     }
     let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
     game.physics.p2.gravity.x = gravity[0] * gravityForce;
-    game.physics.p2.gravity.y = gravity[1] * gravityForce;
-    //console.log(gravity);
-    
+    game.physics.p2.gravity.y = gravity[1] * gravityForce;    
     
 }
 
-function AAA(){
-    let t = ["XYZ", "YXZ", "ZXY", "ZYX", "XZY", "YZX"];
-    for(let i=0; i<8; i++){
-        for(let j=0; j<6; j++){
-            let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma, t[j], i);
-            //console.log(i + ": " + t[j], gravity);
-        }
-    }
-    let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
-    console.log(gravity[0], gravity[1]);
-    console.log(angularOrientation);
-}
 
 function update() {
     updateGravity();
@@ -209,8 +173,9 @@ gn.init().then(function(){
   gn.start(function(data){
       
       if(
+          false &&
           (accelerationVector[0] = data.dm.gx) && 
-          (accelerationVector[1] = -data.dm.gy) &&
+          (accelerationVector[1] = data.dm.gy) &&
           (accelerationVector[2] = data.dm.gz) )
       {
           document.body.style.backgroundColor = "gray";
@@ -221,6 +186,7 @@ gn.init().then(function(){
           angularOrientation.alpha = data.do.alpha;
           angularOrientation.beta = data.do.beta;
           angularOrientation.gamma = data.do.gamma;
+          document.body.style.backgroundColor = "dimgray";
       }
       
       
@@ -228,8 +194,52 @@ gn.init().then(function(){
 }).catch(function(e){
   console.log("No gyroscope or accelerometer support");
 });
-setInterval(AAA, 500);
 
-function change(key, val){
-    window[key] = val;
-}
+//
+//function AAA(){
+//    let t = ["XYZ", "YXZ", "ZXY", "ZYX", "XZY", "YZX"];
+//    for(let i=0; i<8; i++){
+//        for(let j=0; j<6; j++){
+//            let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma, t[j], i);
+//            //console.log(i + ": " + t[j], gravity);
+//        }
+//    }
+//    let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
+//    console.log(gravity[0], gravity[1]);
+//    console.log(angularOrientation);
+//}
+//setInterval(AAA, 500);
+//
+//function change(key, val){
+//    window[key] = val;
+//}
+//
+//function test(){
+//    var cases = [
+//        [[0,0,0],       [0,0]],     // Flat
+//        [[0,180,0],     [0,0]],     // Flat reversed
+//        [[0,90,-90],    [-1, 0]],   // Left
+//        [[0,0,-90],    [-1, 0]],   // Left
+//        [[0,90,-90],    [-1, 0]],   // Left
+//        [[0,180,-90],     [1, 0]],    // Left
+//        [[0,90,90],     [1, 0]],    // Right
+//        [[0,0,90],     [1, 0]],    // Right
+//        [[0,180,90],     [1, 0]],    // Right
+//        [[0,90,0],    [0, 1]],      // Normal
+//        [[0,100,0],    [0, 1]],      // Normal
+//        [[0,80,0],    [0, 1]],      // Normal
+//        [[180,-90,0],    [0, -1]],    // Upside
+//        [[0,-90,0],    [0, -1]],    // Upside
+//        [[0,-80,0],    [0, -1]],    // Upside
+//        [[0,-100,0],    [0, -1]],    // Upside
+//        [[180,-80,0],    [0, -1]],    // Upside
+//        [[180,-100,0],    [0, -1]],    // Upside
+//    ];
+//    
+//    
+//    for(let i=0; i<cases.length; i++){
+//        
+//        let goods = [0,1,2,3,4,5,6,7];
+//        for(let i=0)
+//    }
+//}
