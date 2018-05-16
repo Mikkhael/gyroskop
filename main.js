@@ -72,8 +72,24 @@ var angularOrientation = {alpha: 0, beta: 0, gamma: 0};
 var accelerationVector = [0, 0, 0];
 var useAccelerationVector = false;
 
-function getGravityVector(alpha, beta, gamma, order = "ZXY", mask = 7){
+ORDER = "ZXY";
+MASK = 7;
+
+function getGravityVector(alpha, beta, gamma, order, mask){
     
+    if(alpha === 0)
+        alpha = 0;
+    if(beta === 0)
+        beta = 0;
+    if(gamma === 0)
+        gamma = 0;
+    
+    if(order === undefined){
+        order = ORDER;
+    }
+    if(mask === undefined){
+        mask = MASK;
+    }
     //document.getElementById('tak').style.transform = `rotateZ(${alpha}deg) rotateX(${beta}deg) rotateY(${gamma}deg)`;
     //document.getElementById('orient').style.transform = `rotateY(${-gamma}deg) rotateX(${-beta}deg) rotateZ(${-alpha}deg)`;
     
@@ -175,9 +191,11 @@ function AAA(){
     for(let i=0; i<8; i++){
         for(let j=0; j<6; j++){
             let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma, t[j], i);
-            console.log(i + ": " + t[j], gravity);
+            //console.log(i + ": " + t[j], gravity);
         }
     }
+    let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
+    console.log(gravity[0], gravity[1]);
     console.log(angularOrientation);
 }
 
@@ -195,6 +213,7 @@ gn.init().then(function(){
           (accelerationVector[1] = data.dm.gy) && 
           (accelerationVector[2] = data.dm.gz) )
       {
+          document.body.style.backgroundColor = "gray";
           useAccelerationVector = true;
       }
       else{
@@ -209,3 +228,8 @@ gn.init().then(function(){
 }).catch(function(e){
   console.log("No gyroscope or accelerometer support");
 });
+setInterval(AAA, 500);
+
+function change(key, val){
+    window[key] = val;
+}
