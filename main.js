@@ -84,22 +84,22 @@ function getGravityVector(alpha, beta, gamma, order = "ZXY", mask = 7){
         X: beta,
     };
     
-    document.getElementById('tak').style.transform =
-    //"rotateX(90deg) " +
-    "rotateZ(" + ((mask & 1 ? -1 : 1) * axToAng[order[0]]) + "deg) " +
-    "rotateX(" + ((mask & 2 ? -1 : 1) * axToAng[order[1]]) + "deg) " +
-    "rotateY(" + ((mask & 4 ? -1 : 1) * axToAng[order[2]]) + "deg) " +
-    "";
-    
-     document.getElementById('orient').style.transform =
-    "rotateX(90deg) " +
-    "rotateZ(" + ( -alpha ) + "deg) " +
-    "rotateX(" + -beta + "deg) " +
-    "rotateY(" + ( -gamma ) + "deg)" +
-    "rotateY(" + ( gamma ) + "deg)" +
-    "rotateX(" + beta + "deg) " +
-    "rotateZ(" + ( alpha ) + "deg) " +
-    "";
+//    document.getElementById('tak').style.transform =
+//    //"rotateX(90deg) " +
+//    "rotateZ(" + ((mask & 1 ? -1 : 1) * axToAng[order[0]]) + "deg) " +
+//    "rotateX(" + ((mask & 2 ? -1 : 1) * axToAng[order[1]]) + "deg) " +
+//    "rotateY(" + ((mask & 4 ? -1 : 1) * axToAng[order[2]]) + "deg) " +
+//    "";
+//    
+//     document.getElementById('orient').style.transform =
+//    "rotateX(90deg) " +
+//    "rotateZ(" + ( -alpha ) + "deg) " +
+//    "rotateX(" + -beta + "deg) " +
+//    "rotateY(" + ( -gamma ) + "deg)" +
+//    "rotateY(" + ( gamma ) + "deg)" +
+//    "rotateX(" + beta + "deg) " +
+//    "rotateZ(" + ( alpha ) + "deg) " +
+//    "";
     
     
     
