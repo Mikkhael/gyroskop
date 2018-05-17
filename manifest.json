@@ -1,0 +1,22 @@
+{
+  "name": "Gravity Ball Maze",
+  "short_name": "Ball Maze",
+  "lang": "en-US",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07448e",
+  "theme_color": "#0057c1",
+  "description": "A simple game where the ball moves according to orientation of your phone",
+  "icons": [{
+    "src": "assets/icon512x512.png",
+    "sizes": "512x512",
+    "type": "image/png"
+  },{
+    "src": "assets/icon192x192.png",
+    "sizes": "192x192",
+    "type": "image/png"
+  }],
+  "prefer_related_applications": false,
+  "related_applications": []
+}

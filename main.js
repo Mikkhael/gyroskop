@@ -1,61 +1,137 @@
-var game = new Phaser.Game(320, 430, Phaser.AUTO, 'tak', { preload: preload, create: create, update: update });
+if(window.screen.lockOrientation)
+    window.screen.lockOrientation("portrait");
+
+var levelScale = 1;
+(function(){
+	let width = window.innerWidth - 20;
+	let height = window.innerHeight - 20;
+	
+	let scaleW = width / 320;
+	let scaleH = height / 430;
+	
+	levelScale = Math.min(scaleW, scaleH);
+	
+})();
+
+
+
+var game = new Phaser.Game(window.innerWidth - 20, window.innerHeight - 20, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
 
 
 function preload() {
 
     game.stage.disableVisibilityChange = true;
+	game.stage.backgroundColor = "#ffffff";
     
-    game.load.image('background', 'assets/lvl.jpg');
-    game.load.json('level', 'assets/lvlv2.json');
+    game.load.json('levels', 'assets/levels/levels.json');
+    game.load.image('lvl1bg', 'assets/levels/lvl1.jpg');
     game.load.image('ball', 'assets/ball.png');
 
 }
 
-const levelScale = 1;
-const ballScale = 0.25;
-var walls;
-var ball;
+var ballScale = 0.25;
+
+var walls, wallsCollisionGroup;
+
+var ball, ballCollisionGroup;
+var finish, finishCollisionGroup;
+var background;
+var levelsJson;
 
 var graphics;
 
-var gravityForce = 300;
+var gravityForce = 1000;
 
 function create() {
     
-    graphics = game.add.graphics(0,0);
     
+	
     game.physics.startSystem(Phaser.Physics.P2JS);
-    game.physics.p2.restitution = 0.1;
+    game.physics.p2.restitution = 0.3;
     
-    let bg = game.add.sprite(0,0,'background');
-    bg.scale.setTo(levelScale, levelScale);
-    
-    var json = game.cache.getJSON('level').map( polygon => polygon.map(points => [points[0] * 320 / 84.666664, points[1] * 430 / 113.77084 ]));
-    
+    levelsJson = game.cache.getJSON('levels');
     
     walls = game.add.physicsGroup(Phaser.Physics.P2JS);
-    for(let polygon of json){
-        let wall = walls.create(0,0);
-	    wall.body.clearShapes();
-        //wall.body.addPolygon({}, polygon.map(x => x.filter(y => true)));
-        wall.body.addPolygon({}, polygon);
-        wall.body.dynamic = false;
-    }
     
-    
-    ball = game.add.sprite(160, 20, 'ball');
-    ball.scale.setTo(ballScale, ballScale);
+    ball = game.add.sprite(-100 * levelScale, -100 * levelScale, 'ball');
+    ball.scale.setTo(ballScale * levelScale, ballScale * levelScale);
     
     game.physics.p2.enable(ball);
-    ball.body.setCircle(50 * ballScale);
+    ball.body.setCircle(50 * ballScale * levelScale);
     
     game.physics.p2.gravity.y = 0;
     game.physics.p2.gravity.x = 0;
     
+    ball.body.dynamic = false;
     
-    /*graphics.clear();
-    for(let polygon of json){
+    finish = game.add.sprite(0,0);
+    game.physics.p2.enable(finish);
+    finish.body.dynamic = false;
+    
+    finishCollisionGroup = game.physics.p2.createCollisionGroup();
+    wallsCollisionGroup  = game.physics.p2.createCollisionGroup();
+    ballCollisionGroup  = game.physics.p2.createCollisionGroup();
+	
+    finish.body.setCollisionGroup(finishCollisionGroup);
+	ball.body.setCollisionGroup(ballCollisionGroup);
+	ball.body.isBall = true;
+	
+    ball.body.collides([finishCollisionGroup, wallsCollisionGroup]);
+    finish.body.collides([ballCollisionGroup]);
+	
+	finish.body.onBeginContact.add(function(body){
+		if(body.isBall){
+			finishLevel();
+		}
+	});
+    
+   
+    loadLevel(currentLevel);
+    
+}
+
+function update() {
+    updateGravity();
+}
+
+var currentLevel = 0;
+
+function loadLevel(num){
+    let lvl = levelsJson[num];
+    
+    background = game.add.sprite(0,0,lvl.bg);
+    background.scale.setTo(levelScale, levelScale);
+    
+    walls.removeAll();
+    
+    let polygons = lvl.walls.map( polygon => polygon.map(points => [levelScale * points[0] * 320 / 84.666664, levelScale * points[1] * 430 / 113.77084 ]));
+    for(let polygon of polygons){
+        let wall = walls.create(0,0);
+	    wall.body.clearShapes();
+        wall.body.addPolygon({}, polygon.map(x => x.filter(y => true)));
+		wall.body.setCollisionGroup(wallsCollisionGroup);
+		wall.body.collides(ballCollisionGroup);
+        wall.body.dynamic = false;
+    }
+    
+    finish.body.x = lvl.finish.position[0] * levelScale;
+	finish.body.y = lvl.finish.position[1] * levelScale;
+	game.world.bringToTop(finish);
+    if(lvl.finish.type === "circle"){
+    	finish.body.setCircle(20 * levelScale);
+    	finish.body.setCollisionGroup(finishCollisionGroup);
+    }
+    
+    //ball.body.position = new Phaser.Point(lvl.start[0], lvl.start[1]);
+    ball.body.x = lvl.start[0] * levelScale;
+    ball.body.y = lvl.start[1] * levelScale;
+	game.world.bringToTop(ball);
+	ball.body.dynamic = true;
+	
+	graphics = game.add.graphics(0,0);
+	/*graphics.clear();
+    for(let polygon of polygons){
         graphics.beginFill(0xff00ff);
         graphics.lineStyle(1,0xff0000);
         graphics.moveTo(polygon[0][0], polygon[0][1]);
@@ -65,7 +141,12 @@ function create() {
         graphics.endFill();
     }*/
     
-    
+        
+}
+
+function finishLevel(){
+    document.getElementById('levelCompletePopUp').style.display = "block";
+    setTimeout(function(){document.getElementById('levelCompletePopUp').style.opacity = "1";}, 0);
 }
 
 var angularOrientation = {alpha: 0, beta: 0, gamma: 0};
@@ -74,63 +155,15 @@ var useAccelerationVector = false;
 
 function getGravityVector(a, b, g){
     
-//     document.getElementById('orient').style.transform =
-//    //"rotateX(90deg) " +
-//    "rotateZ(" + (-a) + "deg) " +
-//    "rotateX(" + b + "deg) " +
-//    "rotateY(" + (-g) + "deg) " +
-//    "";
-    
     let toRad = function(deg){
         return Math.PI * deg / 180;
     }
     
-    // Nie iwem dlaczego, ale tak działa
+    // ???
     a   = 0;
     b   = -toRad(b);
     g   = toRad(g);
     
-    
-	/*
-    var qw, qx, qy, qz;
-    
-    var cy = Math.cos(yaw * 0.5);
-	var sy = Math.sin(yaw * 0.5);
-	var cr = Math.cos(roll * 0.5);
-	var sr = Math.sin(roll * 0.5);
-	var cp = Math.cos(pitch * 0.5);
-	var sp = Math.sin(pitch * 0.5);
-
-	qw = cy * cr * cp + sy * sr * sp;
-	qx = cy * sr * cp - sy * cr * sp;
-	qy = cy * cr * sp + sy * sr * cp;
-	qz = sy * cr * cp - cy * sr * sp;
-    
-    qw2 = qw*qw;
-    qx2 = qx*qx;
-    qy2 = qy*qy;
-    qz2 = qz*qz;
-    
-    let m = [[],[],[]];
-    m[0][0] = 1 - 2*qy2 - 2*qz2;
-    m[0][1] = 2*qx*qy - 2*qz*qw;
-    m[0][2] = 2*qx*qz + 2*qy*qw;
-    m[1][0] = 2*qx*qy + 2*qz*qw;
-    m[1][1] = 1 - 2*qx2 - 2*qz2;
-    m[1][2] = 2*qy*qz - 2*qx*qw;
-    m[2][0] = 2*qx*qz - 2*qy*qw;
-    m[2][1] = 2*qy*qz + 2*qx*qw;
-    m[2][2] = 1 - 2*qx2 - 2*qy2;
-    
-    var v = [0,0,-1];
-    var resVector = [
-        v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2],
-        v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2],
-        v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2]
-    ]
-    
-    return resVector;
-    */
     
     let as = Math.sin(a);
     let bs = Math.sin(b);
@@ -139,7 +172,7 @@ function getGravityVector(a, b, g){
     let bc = Math.cos(b);
     let gc = Math.cos(g);
     
-    var v = [0,0,-1]; 
+    var v = [0,0,-1];
     
     var resVectorYXZ = [];
     
@@ -158,10 +191,9 @@ function updateGravity(){
     }
     let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
     game.physics.p2.gravity.x = gravity[0] * gravityForce;
-    game.physics.p2.gravity.y = gravity[1] * gravityForce;    
+    game.physics.p2.gravity.y = gravity[1] * gravityForce;
     
 }
-
 
 function update() {
     updateGravity();
@@ -178,7 +210,6 @@ gn.init().then(function(){
           (accelerationVector[1] = data.dm.gy) &&
           (accelerationVector[2] = data.dm.gz) )
       {
-          document.body.style.backgroundColor = "gray";
           useAccelerationVector = true;
       }
       else{
@@ -186,13 +217,13 @@ gn.init().then(function(){
           angularOrientation.alpha = data.do.alpha;
           angularOrientation.beta = data.do.beta;
           angularOrientation.gamma = data.do.gamma;
-          document.body.style.backgroundColor = "dimgray";
       }
       
       
   });
 }).catch(function(e){
-  console.log("No gyroscope or accelerometer support");
+  console.log("No gyroscope support");
+  alert("Your device does not have a gyroscope, or doesn't support Device Orientation Events");
 });
 
 //
@@ -235,10 +266,7 @@ gn.init().then(function(){
 //        [[180,-80,0],    [0, -1]],    // Upside
 //        [[180,-100,0],    [0, -1]],    // Upside
 //    ];
-//    
-//    
 //    for(let i=0; i<cases.length; i++){
-//        
 //        let goods = [0,1,2,3,4,5,6,7];
 //        for(let i=0)
 //    }
