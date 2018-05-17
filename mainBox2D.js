@@ -42,14 +42,14 @@ var levelsJson;
 
 var graphics;
 
-var gravityForce = 1000;
+var gravityForce = 2000;
+
+
+var timer;
+var timePassed = 0;
 
 function create() {
     
-    
-    
-	//game.physics.startSystem(Phaser.Physics.P2JS);
-	//game.physics.box2d.setBoundsToWorld(true, true, true, true);
 	game.physics.startSystem(Phaser.Physics.BOX2D);	
 	game.physics.box2d.setBoundsToWorld(true, true, true, true);
     game.physics.box2d.gravity.y = 0;
@@ -72,27 +72,12 @@ function create() {
     finish = game.add.sprite(0,0);
     game.physics.box2d.enable(finish);
     finish.body.static = true;
-    
-//    finishCollisionGroup = game.physics.box2d.createCollisionGroup();
-//    wallsCollisionGroup  = game.physics.box2d.createCollisionGroup();
-//    ballCollisionGroup  = game.physics.box2d.createCollisionGroup();
-	
-//    finish.body.setCollisionGroup(finishCollisionGroup);
-//	ball.body.setCollisionGroup(ballCollisionGroup);
 	ball.body.isBall = true;
 	
-//	ball.body.collideWorldBounds = true;
-//    ball.body.collides([finishCollisionGroup, wallsCollisionGroup, game.physics.box2d.boundsCollisionGroup]);
-//    finish.body.collides([ballCollisionGroup]);
-	
-//	finish.body.onBeginContact.add(function(body){
-//		if(body.isBall){
-//			finishLevel();
-//		}
-//	});
-    
 	finish.body.setBodyContactCallback(ball, nextLevelHandler, this);
     
+	timer = game.time.create(false);
+	timer.start();
    
     loadLevel(currentLevel);
     
@@ -108,6 +93,9 @@ function nextLevelHandler(){
 
 function update() {
     updateGravity();
+	if(!levelComplete && !loadingLevel){
+		timePassed += timer.elapsed;
+	}
 }
 
 var currentLevel = 0;
@@ -131,11 +119,7 @@ function loadLevel(num){
     let polygons = lvl.walls.map( polygon => polygon.map(points => [levelScale * points[0] * 320 / 84.666664, levelScale * points[1] * 430 / 113.77084 ]));
     for(let polygon of polygons){
         let wall = walls.create(0,0);
-//	    wall.body.clearShapes();
-//        wall.body.addPolygon({}, polygon.map(x => x.filter(y => true)));
         wall.body.addPolygon(polygon.reduce(function(prev, val){return prev.concat(val);}, []));
-//		wall.body.setCollisionGroup(wallsCollisionGroup);
-//		wall.body.collides(ballCollisionGroup);
         wall.body.static = true;
     }
     
@@ -144,10 +128,8 @@ function loadLevel(num){
 	game.world.bringToTop(finish);
     if(lvl.finish.type === "circle"){
     	finish.body.setCircle(20 * levelScale);
-//    	finish.body.setCollisionGroup(finishCollisionGroup);
     }
     
-    //ball.body.position = new Phaser.Point(lvl.start[0], lvl.start[1]);
     ball.body.x = lvl.start[0] * levelScale;
     ball.body.y = lvl.start[1] * levelScale;
 	game.world.bringToTop(ball);
@@ -165,6 +147,7 @@ function loadLevel(num){
         graphics.endFill();
     }*/
     
+	timePassed = 0;
     loadingLevel = false;
 	levelComplete = false;
 	finish.body.setBodyContactCallback(ball, nextLevelHandler, this);
@@ -173,6 +156,7 @@ function loadLevel(num){
 function finishLevel(){
     document.getElementById('levelCompletePopUp').style.display = "block";
     setTimeout(function(){document.getElementById('levelCompletePopUp').style.opacity = "1";}, 0);
+	document.getElementById('timePassed').innerHTML = timePassed / 1000;
 }
 
 function nextLevel(){
@@ -183,11 +167,6 @@ function nextLevel(){
 		document.getElementById('levelCompletePopUp').style.opacity = "0";
 		loadLevel(currentLevel);
 	}
-}
-
-function finishLevel(){
-    document.getElementById('levelCompletePopUp').style.display = "block";
-    setTimeout(function(){document.getElementById('levelCompletePopUp').style.opacity = "1";}, 0);
 }
 
 var angularOrientation = {alpha: 0, beta: 0, gamma: 0};
@@ -236,8 +215,24 @@ function updateGravity(){
     
 }
 
-function update() {
-    updateGravity();
+function updateGravityDebug(){
+	ball.body.setZeroVelocity();
+	if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT))
+    {
+        ball.body.x -= 10;
+    }
+    else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT))
+    {
+        ball.body.x += 10;
+    }
+    if (game.input.keyboard.isDown(Phaser.Keyboard.UP))
+    {
+        ball.body.y -= 10;
+    }
+    else if (game.input.keyboard.isDown(Phaser.Keyboard.DOWN))
+    {
+        ball.body.y += 10;
+    }
 }
 
 var gn = new GyroNorm();
@@ -264,7 +259,7 @@ gn.init().then(function(){
   });
 }).catch(function(e){
   console.log("No gyroscope support");
-  alert("Your device does not have a gyroscope, or doesn't support Device Orientation Events");
+  //alert("Your device does not have a gyroscope, or doesn't support Device Orientation Events");
 });
 
 

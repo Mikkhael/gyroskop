@@ -44,6 +44,10 @@ var graphics;
 
 var gravityForce = 1000;
 
+var timer;
+var timeCounter = 0;
+var countTime = false;
+
 function create() {
     
     
@@ -89,13 +93,19 @@ function create() {
 		}
 	});
     
-   
+	
+	time = game.time.create(false);
+   	time.start();
     loadLevel(currentLevel);
     
 }
 
 function update() {
     updateGravity();
+	
+	if(countTime){
+		timeCounter += timer.elapsed;
+	}
 }
 
 var currentLevel = 0;
@@ -135,6 +145,7 @@ function loadLevel(num){
     ball.body.y = lvl.start[1] * levelScale;
 	game.world.bringToTop(ball);
 	ball.body.dynamic = true;
+	countTime = true;
 	
 	graphics = game.add.graphics(0,0);
 	/*graphics.clear();
