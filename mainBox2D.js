@@ -15,7 +15,7 @@ var levelScale = 1;
 
 
 
-var game = new Phaser.Game(window.innerWidth - 20, window.innerHeight - 20, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(320 * levelScale, 430 * levelScale, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
 
 
@@ -48,50 +48,62 @@ function create() {
     
     
     
-	game.physics.startSystem(Phaser.Physics.P2JS);
-	game.physics.p2.setBoundsToWorld(true, true, true, true);
-    game.physics.p2.gravity.y = 0;
-    game.physics.p2.gravity.x = 0;
-	game.physics.p2.restitution = 0.3;
+	//game.physics.startSystem(Phaser.Physics.P2JS);
+	//game.physics.box2d.setBoundsToWorld(true, true, true, true);
+	game.physics.startSystem(Phaser.Physics.BOX2D);	
+	game.physics.box2d.setBoundsToWorld(true, true, true, true);
+    game.physics.box2d.gravity.y = 0;
+    game.physics.box2d.gravity.x = 0;
+	game.physics.box2d.restitution = 0.3;
 	
     levelsJson = game.cache.getJSON('levels');
     
-    walls = game.add.physicsGroup(Phaser.Physics.P2JS);
+    walls = game.add.physicsGroup(Phaser.Physics.BOX2D);
     
     ball = game.add.sprite(-100 * levelScale, -100 * levelScale, 'ball');
     ball.scale.setTo(ballScale * levelScale, ballScale * levelScale);
     
-    game.physics.p2.enable(ball);
+    game.physics.box2d.enable(ball);
     ball.body.setCircle(50 * ballScale * levelScale);
     
-    
-    ball.body.dynamic = false;
+    ball.body.collideWorldBounds = true;
+    ball.body.static = true;
     
     finish = game.add.sprite(0,0);
-    game.physics.p2.enable(finish);
-    finish.body.dynamic = false;
+    game.physics.box2d.enable(finish);
+    finish.body.static = true;
     
-    finishCollisionGroup = game.physics.p2.createCollisionGroup();
-    wallsCollisionGroup  = game.physics.p2.createCollisionGroup();
-    ballCollisionGroup  = game.physics.p2.createCollisionGroup();
+//    finishCollisionGroup = game.physics.box2d.createCollisionGroup();
+//    wallsCollisionGroup  = game.physics.box2d.createCollisionGroup();
+//    ballCollisionGroup  = game.physics.box2d.createCollisionGroup();
 	
-    finish.body.setCollisionGroup(finishCollisionGroup);
-	ball.body.setCollisionGroup(ballCollisionGroup);
+//    finish.body.setCollisionGroup(finishCollisionGroup);
+//	ball.body.setCollisionGroup(ballCollisionGroup);
 	ball.body.isBall = true;
 	
-	ball.body.collideWorldBounds = true;
-    ball.body.collides([finishCollisionGroup, wallsCollisionGroup, game.physics.p2.boundsCollisionGroup]);
-    finish.body.collides([ballCollisionGroup]);
+//	ball.body.collideWorldBounds = true;
+//    ball.body.collides([finishCollisionGroup, wallsCollisionGroup, game.physics.box2d.boundsCollisionGroup]);
+//    finish.body.collides([ballCollisionGroup]);
 	
-	finish.body.onBeginContact.add(function(body){
-		if(body.isBall){
-			finishLevel();
-		}
-	});
+//	finish.body.onBeginContact.add(function(body){
+//		if(body.isBall){
+//			finishLevel();
+//		}
+//	});
+    
+	finish.body.setBodyContactCallback(ball, nextLevelHandler, this);
     
    
     loadLevel(currentLevel);
     
+}
+
+function nextLevelHandler(){
+	if(!window['levelComplete'] && !window['loadingLevel']){
+		finish.body.setBodyContactCallback(ball, null);
+		window['levelComplete'] = true;
+		finishLevel();
+	}
 }
 
 function update() {
@@ -101,25 +113,30 @@ function update() {
 var currentLevel = 0;
 const levelsCount = 2;
 var levelComplete = false;
+let loadingLevel = false;
 
 function loadLevel(num){
-	levelComplete = false;
 	currentLevel = num;
     let lvl = levelsJson[num];
     
+	if(background)
+		background.destroy();
     background = game.add.sprite(0,0,lvl.bg);
     background.scale.setTo(levelScale, levelScale);
+	
+	ball.body.setZeroVelocity();
     
-    walls.removeAll();
+    walls.removeAll(true);
     
     let polygons = lvl.walls.map( polygon => polygon.map(points => [levelScale * points[0] * 320 / 84.666664, levelScale * points[1] * 430 / 113.77084 ]));
     for(let polygon of polygons){
         let wall = walls.create(0,0);
-	    wall.body.clearShapes();
-        wall.body.addPolygon({}, polygon.map(x => x.filter(y => true)));
-		wall.body.setCollisionGroup(wallsCollisionGroup);
-		wall.body.collides(ballCollisionGroup);
-        wall.body.dynamic = false;
+//	    wall.body.clearShapes();
+//        wall.body.addPolygon({}, polygon.map(x => x.filter(y => true)));
+        wall.body.addPolygon(polygon.reduce(function(prev, val){return prev.concat(val);}, []));
+//		wall.body.setCollisionGroup(wallsCollisionGroup);
+//		wall.body.collides(ballCollisionGroup);
+        wall.body.static = true;
     }
     
     finish.body.x = lvl.finish.position[0] * levelScale;
@@ -127,7 +144,7 @@ function loadLevel(num){
 	game.world.bringToTop(finish);
     if(lvl.finish.type === "circle"){
     	finish.body.setCircle(20 * levelScale);
-    	finish.body.setCollisionGroup(finishCollisionGroup);
+//    	finish.body.setCollisionGroup(finishCollisionGroup);
     }
     
     //ball.body.position = new Phaser.Point(lvl.start[0], lvl.start[1]);
@@ -148,23 +165,29 @@ function loadLevel(num){
         graphics.endFill();
     }*/
     
-        
+    loadingLevel = false;
+	levelComplete = false;
+	finish.body.setBodyContactCallback(ball, nextLevelHandler, this);
 }
 
 function finishLevel(){
     document.getElementById('levelCompletePopUp').style.display = "block";
     setTimeout(function(){document.getElementById('levelCompletePopUp').style.opacity = "1";}, 0);
-	levelComplete = true;
 }
 
 function nextLevel(){
-	if(levelComplete){
-		levelComplete = false;
+	if(!loadingLevel){
+		loadingLevel = true;
 		currentLevel = (currentLevel+1)%levelsCount;
 		document.getElementById('levelCompletePopUp').style.display = "none";
 		document.getElementById('levelCompletePopUp').style.opacity = "0";
 		loadLevel(currentLevel);
 	}
+}
+
+function finishLevel(){
+    document.getElementById('levelCompletePopUp').style.display = "block";
+    setTimeout(function(){document.getElementById('levelCompletePopUp').style.opacity = "1";}, 0);
 }
 
 var angularOrientation = {alpha: 0, beta: 0, gamma: 0};
@@ -203,13 +226,13 @@ function getGravityVector(a, b, g){
 
 function updateGravity(){
     if(useAccelerationVector){
-        game.physics.p2.gravity.x =   accelerationVector[0] * gravityForce;
-        game.physics.p2.gravity.y = - accelerationVector[1] * gravityForce;
+        game.physics.box2d.gravity.x =   accelerationVector[0] * gravityForce;
+        game.physics.box2d.gravity.y = - accelerationVector[1] * gravityForce;
         return;
     }
     let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
-    game.physics.p2.gravity.x = gravity[0] * gravityForce;
-    game.physics.p2.gravity.y = gravity[1] * gravityForce;
+    game.physics.box2d.gravity.x = gravity[0] * gravityForce;
+    game.physics.box2d.gravity.y = gravity[1] * gravityForce;
     
 }
 
@@ -244,48 +267,50 @@ gn.init().then(function(){
   alert("Your device does not have a gyroscope, or doesn't support Device Orientation Events");
 });
 
-//
-//function AAA(){
-//    let t = ["XYZ", "YXZ", "ZXY", "ZYX", "XZY", "YZX"];
-//    for(let i=0; i<8; i++){
-//        for(let j=0; j<6; j++){
-//            let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma, t[j], i);
-//            //console.log(i + ": " + t[j], gravity);
-//        }
-//    }
-//    let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
-//    console.log(gravity[0], gravity[1]);
-//    console.log(angularOrientation);
-//}
-//setInterval(AAA, 500);
-//
-//function change(key, val){
-//    window[key] = val;
-//}
-//
-//function test(){
-//    var cases = [
-//        [[0,0,0],       [0,0]],     // Flat
-//        [[0,180,0],     [0,0]],     // Flat reversed
-//        [[0,90,-90],    [-1, 0]],   // Left
-//        [[0,0,-90],    [-1, 0]],   // Left
-//        [[0,90,-90],    [-1, 0]],   // Left
-//        [[0,180,-90],     [1, 0]],    // Left
-//        [[0,90,90],     [1, 0]],    // Right
-//        [[0,0,90],     [1, 0]],    // Right
-//        [[0,180,90],     [1, 0]],    // Right
-//        [[0,90,0],    [0, 1]],      // Normal
-//        [[0,100,0],    [0, 1]],      // Normal
-//        [[0,80,0],    [0, 1]],      // Normal
-//        [[180,-90,0],    [0, -1]],    // Upside
-//        [[0,-90,0],    [0, -1]],    // Upside
-//        [[0,-80,0],    [0, -1]],    // Upside
-//        [[0,-100,0],    [0, -1]],    // Upside
-//        [[180,-80,0],    [0, -1]],    // Upside
-//        [[180,-100,0],    [0, -1]],    // Upside
-//    ];
-//    for(let i=0; i<cases.length; i++){
-//        let goods = [0,1,2,3,4,5,6,7];
-//        for(let i=0)
-//    }
-//}
+
+/*
+function AAA(){
+    let t = ["XYZ", "YXZ", "ZXY", "ZYX", "XZY", "YZX"];
+    for(let i=0; i<8; i++){
+        for(let j=0; j<6; j++){
+            let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma, t[j], i);
+            //console.log(i + ": " + t[j], gravity);
+        }
+    }
+    let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
+    console.log(gravity[0], gravity[1]);
+    console.log(angularOrientation);
+}
+setInterval(AAA, 500);
+
+function change(key, val){
+    window[key] = val;
+}
+
+function test(){
+    var cases = [
+        [[0,0,0],       [0,0]],     // Flat
+        [[0,180,0],     [0,0]],     // Flat reversed
+        [[0,90,-90],    [-1, 0]],   // Left
+        [[0,0,-90],    [-1, 0]],   // Left
+        [[0,90,-90],    [-1, 0]],   // Left
+        [[0,180,-90],     [1, 0]],    // Left
+        [[0,90,90],     [1, 0]],    // Right
+        [[0,0,90],     [1, 0]],    // Right
+        [[0,180,90],     [1, 0]],    // Right
+        [[0,90,0],    [0, 1]],      // Normal
+        [[0,100,0],    [0, 1]],      // Normal
+        [[0,80,0],    [0, 1]],      // Normal
+        [[180,-90,0],    [0, -1]],    // Upside
+        [[0,-90,0],    [0, -1]],    // Upside
+        [[0,-80,0],    [0, -1]],    // Upside
+        [[0,-100,0],    [0, -1]],    // Upside
+        [[180,-80,0],    [0, -1]],    // Upside
+        [[180,-100,0],    [0, -1]],    // Upside
+    ];
+    for(let i=0; i<cases.length; i++){
+        let goods = [0,1,2,3,4,5,6,7];
+        for(let i=0)
+    }
+}
+*/
