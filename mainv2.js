@@ -92,7 +92,7 @@ function nextLevelHandler(){
 
 function update() {
     updateGravity();
-	updateGravityDebug();
+	//updateGravityDebug();
 	if(!levelComplete && !loadingLevel){
 		timePassed += timer.elapsed;
 	}
