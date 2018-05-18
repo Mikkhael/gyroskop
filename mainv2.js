@@ -92,7 +92,7 @@ function nextLevelHandler(){
 
 function update() {
     updateGravity();
-	//updateGravityDebug();
+	updateGravityDebug();
 	if(!levelComplete && !loadingLevel){
 		timePassed += timer.elapsed;
 	}
@@ -169,9 +169,12 @@ function drawPolygons(graphics, polygons){
 }
 
 function finishLevel(){
+	document.getElementById('timePassed').innerHTML 			= timePassed / 1000;
+	document.getElementById('newHighscore').style.visibility 	= trySettingNewHighscore(currentLevel, timePassed / 1000) ? "visible" : "hidden";
+	document.getElementById('highscore').innerHTML 				= getHighscore(currentLevel);
+	
     document.getElementById('levelCompletePopUp').style.display = "block";
     setTimeout(function(){document.getElementById('levelCompletePopUp').style.opacity = "1";}, 0);
-	document.getElementById('timePassed').innerHTML = timePassed / 1000;
 }
 
 function nextLevel(){
@@ -182,6 +185,17 @@ function nextLevel(){
 		document.getElementById('levelCompletePopUp').style.opacity = "0";
 		loadLevel(currentLevel);
 	}
+}
+
+function getHighscore(level){
+	return localStorage.getItem("hs"+level) || Infinity;
+}
+function trySettingNewHighscore(level, value){
+	if(+getHighscore(level) < value){
+		return false;
+	}
+	localStorage.setItem("hs"+level, value);
+	return true;
 }
 
 function reset(body, x, y){

@@ -39,6 +39,13 @@
 		#levelCompletePopUp .next{
 			width: 100%;
 		}
+		
+		#newHighscore{
+			color: red;
+		}
+		.score{
+			color: #3862f0;
+		}
     </style>
     
 </head>
@@ -46,9 +53,11 @@
    
    <div id="levelCompletePopUp" onclick="nextLevel()">
        <h2>Level Complete!</h2>
-       <h3>in <span id="timePassed"></span> seconds</h3>
-       <img class="next" src="assets/next.png" alt="">
+       <h3>in <span id="timePassed" class="score"></span> seconds</h3>
+       <h3>Highscore: <span id="highscore" class="score"></span></h3>
+       <h3 id="newHighscore">New Highscore!</h3>
+       <img class="next" src="assets/next.png" alt="Next level">
    </div>
-    <script src="mainBox2D.js"></script>
+    <script src="mainv2.js"></script>
 </body>
 </html>
