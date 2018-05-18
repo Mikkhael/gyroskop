@@ -22,12 +22,12 @@ var game = new Phaser.Game(320 * levelScale, 430 * levelScale, Phaser.AUTO, '', 
 function preload() {
 
     game.stage.disableVisibilityChange = true;
-	game.stage.backgroundColor = "#ffffff";
+	game.stage.backgroundColor = "#388bf0";
     
     game.load.json('levels', 'assets/levels/levels.json');
-    game.load.image('lvl1bg', 'assets/levels/lvl1.jpg');
-    game.load.image('lvl2bg', 'assets/levels/lvl2.jpg');
-    game.load.image('lvl3bg', 'assets/levels/lvl3.jpg');
+    game.load.image('lvl1bg', 'assets/levels/lvl1.png');
+    game.load.image('lvl2bg', 'assets/levels/lvl2.png');
+    game.load.image('lvl3bg', 'assets/levels/lvl3.png');
     game.load.image('ball', 'assets/ball.png');
 
 }
@@ -92,6 +92,7 @@ function nextLevelHandler(){
 
 function update() {
     updateGravity();
+	updateGravityDebug();
 	if(!levelComplete && !loadingLevel){
 		timePassed += timer.elapsed;
 	}
@@ -145,7 +146,17 @@ function loadLevel(num){
 	ball.body.dynamic = true;
 	
 	graphics = game.add.graphics(0,0);
-	/*graphics.clear();
+	//drawPolygons(graphics, polygons);
+    
+	timePassed = 0;
+    loadingLevel = false;
+	levelComplete = false;
+	
+	finish.body.setBodyContactCallback(ball, nextLevelHandler, this);
+}
+
+function drawPolygons(graphics, polygons){
+	graphics.clear();
     for(let polygon of polygons){
         graphics.beginFill(0xff00ff);
         graphics.lineStyle(1,0xff0000);
@@ -154,12 +165,7 @@ function loadLevel(num){
             graphics.lineTo(polygon[i][0], polygon[i][1]);
         }
         graphics.endFill();
-    }*/
-    
-	timePassed = 0;
-    loadingLevel = false;
-	levelComplete = false;
-	finish.body.setBodyContactCallback(ball, nextLevelHandler, this);
+    }
 }
 
 function finishLevel(){

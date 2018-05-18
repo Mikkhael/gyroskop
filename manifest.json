@@ -5,7 +5,7 @@
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#07448e",
+  "background_color": "#388bf0",
   "theme_color": "#0057c1",
   "description": "A simple game where the ball moves according to orientation of your phone",
   "icons": [{
