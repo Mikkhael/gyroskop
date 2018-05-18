@@ -198,6 +198,14 @@ function trySettingNewHighscore(level, value){
 	return true;
 }
 
+(function(){
+	const VERSION = "v1";
+	if(localStorage.getItem("V") !== VERSION){
+		localStorage.clear();
+		localStorage.setItem("V", VERSION);
+	}
+})()
+
 function reset(body, x, y){
 	body.setZeroVelocity();
 	body.x = x;
@@ -240,13 +248,13 @@ function getGravityVector(a, b, g){
 
 function updateGravity(){
     if(useAccelerationVector){
-        game.physics.box2d.gravity.x =   accelerationVector[0] * gravityForce;
-        game.physics.box2d.gravity.y = - accelerationVector[1] * gravityForce;
+        game.physics.box2d.gravity.x =   accelerationVector[0] * gravityForce * levelScale;
+        game.physics.box2d.gravity.y = - accelerationVector[1] * gravityForce * levelScale;
         return;
     }
     let gravity = getGravityVector(angularOrientation.alpha, angularOrientation.beta, angularOrientation.gamma);
-    game.physics.box2d.gravity.x = gravity[0] * gravityForce;
-    game.physics.box2d.gravity.y = gravity[1] * gravityForce;
+    game.physics.box2d.gravity.x = gravity[0] * gravityForce * levelScale;
+    game.physics.box2d.gravity.y = gravity[1] * gravityForce * levelScale;
     
 }
 
